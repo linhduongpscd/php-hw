@@ -45,12 +45,7 @@ class Job extends Model
      */
     public static function getAll()
     {
-        $result = Cache::remember('get_jobs', 10, function (){
-            // return self::orderBy('id', 'DESC')->get();
-            return [];
-        });
-
-        return $result;
+        return [];
     }
 
     /**
@@ -59,15 +54,12 @@ class Job extends Model
      */
     public function addJob($postData)
     {
-        $this->id = substr(uniqid('', true), -4);;
-        $this->name = $postData['name'];
-        $this->description = $postData['description'];
+        $id = substr(uniqid('', true), -4);
+        $data = $postData;
+        $data['id'] = $id;
 
-        if ($this->save() === true) {
-            return true;
-        }
-
-        return false;
+        $job = Redis::set('JOB_' . $id, $data);
+        return $job;
     }
 
     /**
@@ -75,41 +67,7 @@ class Job extends Model
      */
     public static function getJob($id)
     {
-        $result = Cache::remember('get_job_details', 10, function () use ($id){
-            return self::where('id', $id)->first();
-        });
-
-        return $result;
-    }
-
-    /**
-     * @param $postData
-     * @return bool
-     */
-    public function updateJob($postData)
-    {
-        //Cache::forget('get_member_id');
-        $getData = Redis::get('get_job_id');
-
-        if(!empty($getData) || $getData !== null){
-            DB::connection()->enableQueryLog();
-            $job = $this->find($postData->id);
-            $log = DB::getQueryLog();
-            //print_r($log);
-
-            Redis::set('get_job_id', $job->id);
-
-            $jobInfo = $this->find($job->id);
-            $jobInfo->name = $postData->name;
-            $jobInfo->description = $postData->description;
-
-            if ($jobInfo->save() === true) {
-                Redis::set('get_job_details', $jobInfo);
-                return true;
-            }
-
-            return false;
-        }
+        return Redis::get('JOB_' . $id);
     }
 
     /**
@@ -117,10 +75,8 @@ class Job extends Model
      */
     public static function deleteJob($id)
     {
-        $result = Cache::remember('get_job_details', 10, function () use ($id){
-            return self::where('id', $id)->first();
-        });
+        $delete = Redis::del('JOB_' . $id);
 
-        return $result;
+        return $delete;
     }
 }

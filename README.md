@@ -16,3 +16,17 @@ asynchronously.
 ## Docker Containers (Bonus Points):
 • Optionally, set up Docker containers for the Laravel application, including necessary
 services like PHP, Nginx/Apache, and Redis, earning bonus points.
+
+
+# INSTALL:
+
+- Clone source
+- Install redis
+- Install composer
+> composer install
+- Run serve
+> php artisan serve
+
+# API DOCUMENT:
+
+{host}/api/documentation#/

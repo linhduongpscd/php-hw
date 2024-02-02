@@ -11,33 +11,36 @@ use Illuminate\Support\Facades\Session;
 
 use App\Models\Job;
 use App\Http\Resources\JobResource;
+use App\Http\Requests\JobRequest;
 
 class JobController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
-    public function index()
-    {
-        //
-        //Cache::forget('get_members_cache');
-
-        /**
-         * Just Enable the database query log to see query log in text
-         * And find the query is from db or cache
-         */
-        DB::connection()->enableQueryLog();
-        $jobs = Job::getAll();
-        // $log = DB::getQueryLog();
-        //print_r($log);
-
-        return new JobResource($jobs);
-    }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    /**
+     * @OA\Post(
+     *     path="/api/jobs",
+     *     tags={"job"},
+     *     summary="Create job",
+     *     operationId="store",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/JobRequest")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="successful operation",
+     *     ),
+     *     @OA\RequestBody(
+     *         description="job placed for purchasing th pet",
+     *         required=true,
+     *     )
+     * )
+     * @param JobRequest $request
+     */
+    public function store(JobRequest $request)
     {
         //
         $jobModel = new Job();
@@ -49,6 +52,39 @@ class JobController extends Controller
     /**
      * Display the specified resource.
      */
+    /**
+     * @OA\Get(
+     *     path="/api/job/{id}",
+     *     tags={"job"},
+     *     description="Get Job by Id",
+     *     summary="Get detail job",
+     *     operationId="show",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of pet that needs to be fetched",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer",
+     *             format="int64",
+     *             maximum=10,
+     *             minimum=1
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="successful operation",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid ID supplied"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Job not found"
+     *     )
+     * )
+     */
     public function show(string $id)
     {
         //
@@ -58,20 +94,42 @@ class JobController extends Controller
         return new JobResource($job);
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(Request $request, string $id)
-    {
-        //
-        $jobModel = new Job();
-        $updateJob = $jobModel->updateJob($request);
-
-        return new JobResource($updateJob);
-    }
 
     /**
      * Remove the specified resource from storage.
+     */
+    /**
+     * @OA\Delete(
+     *     path="/api/job/{id}",
+     *     tags={"job"},
+     *     description="Delete Job by Id",
+     *     summary="Delete job",
+     *     operationId="destroy",
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of pet that needs to be fetched",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer",
+     *             format="int64",
+     *             maximum=10,
+     *             minimum=1
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="successful operation",
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid ID supplied"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Job not found"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
