@@ -2,16 +2,22 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Contracts\Redis\Connection;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Facades\Session;
+// use Illuminate\Http\Request;
+// use Illuminate\Contracts\Redis\Connection;
+// use Illuminate\Support\Facades\Cache;
+// use Illuminate\Support\Facades\DB;
+// use Illuminate\Support\Facades\Redis;
+// use Illuminate\Support\Facades\Session;
+use GuzzleHttp\RequestOptions;
+
+use Spatie\Crawler\Crawler;
+use Spatie\Crawler\CrawlProfiles\CrawlInternalUrls;
 
 use App\Models\Job;
 use App\Http\Resources\JobResource;
 use App\Http\Requests\JobRequest;
+
+use App\Observers\CustomCrawlerObserver;
 
 class JobController extends Controller
 {
@@ -43,10 +49,31 @@ class JobController extends Controller
     public function store(JobRequest $request)
     {
         //
-        $jobModel = new Job();
-        $createJob = $jobModel->addJob($request);
-        
-        return new JobResource($createJob);
+        $urls = $request->get('urls', []);
+        $ids = [];
+        foreach ($urls as $url) {
+            $jobModel = new Job();
+            $createJob = $jobModel->addJob([
+                'status' => 'pending'
+            ]);
+
+            $id = $createJob["id"];
+            $ids[] = $id;
+
+            Crawler::create([RequestOptions::ALLOW_REDIRECTS => true, RequestOptions::TIMEOUT => 30])
+            ->acceptNofollowLinks()
+            ->ignoreRobots()
+            // ->setParseableMimeTypes(['text/html', 'text/plain'])
+            ->setCrawlObserver(new CustomCrawlerObserver($id))
+            ->setCrawlProfile(new CrawlInternalUrls($url))
+            ->setMaximumResponseSize(1024 * 1024 * 2) // 2 MB maximum
+            ->setTotalCrawlLimit(1) // limit defines the maximal count of URLs to crawl
+            // ->setConcurrency(1) // all urls will be crawled one by one
+            ->setDelayBetweenRequests(100)
+            ->startCrawling($url);
+        }
+
+        return $ids;
     }
 
     /**
@@ -54,7 +81,7 @@ class JobController extends Controller
      */
     /**
      * @OA\Get(
-     *     path="/api/job/{id}",
+     *     path="/api/jobs/{id}",
      *     tags={"job"},
      *     description="Get Job by Id",
      *     summary="Get detail job",
@@ -67,8 +94,6 @@ class JobController extends Controller
      *         @OA\Schema(
      *             type="integer",
      *             format="int64",
-     *             maximum=10,
-     *             minimum=1
      *         )
      *     ),
      *     @OA\Response(
@@ -100,7 +125,7 @@ class JobController extends Controller
      */
     /**
      * @OA\Delete(
-     *     path="/api/job/{id}",
+     *     path="/api/jobs/{id}",
      *     tags={"job"},
      *     description="Delete Job by Id",
      *     summary="Delete job",
@@ -113,8 +138,6 @@ class JobController extends Controller
      *         @OA\Schema(
      *             type="integer",
      *             format="int64",
-     *             maximum=10,
-     *             minimum=1
      *         )
      *     ),
      *     @OA\Response(
@@ -135,8 +158,8 @@ class JobController extends Controller
     {
         //
         $jobModel = new Job();
-        $job = $jobModel->deleteJob($id);
+        $jobModel->deleteJob($id);
         
-        return new JobResource($job);
+        return true;
     }
 }

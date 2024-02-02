@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+// use Illuminate\Support\Facades\Cache;
+// use Illuminate\Support\Facades\DB;
+// use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Redis;
 
 class Job extends Model
@@ -58,8 +58,8 @@ class Job extends Model
         $data = $postData;
         $data['id'] = $id;
 
-        $job = Redis::set('JOB_' . $id, $data);
-        return $job;
+        Redis::set('JOB_' . $id, json_encode($data));
+        return $data;
     }
 
     /**
@@ -67,7 +67,29 @@ class Job extends Model
      */
     public static function getJob($id)
     {
-        return Redis::get('JOB_' . $id);
+        $job = Redis::get('JOB_' . $id);
+        return json_decode($job, true);
+    }
+
+    /**
+     * @param $postData
+     * @return bool
+     */
+    public function updateJob($postData, $id)
+    {
+        $data = Redis::get('JOB_' . $id);
+        $getData = json_decode($data, true);
+
+        if(!empty($getData) || $getData !== null){
+            Redis::del('JOB_' . $id);
+
+            $data = $postData;
+            $data['id'] = $id;
+
+            Redis::set('JOB_' . $id, json_encode($data));
+            return true;
+        }
+        return false;
     }
 
     /**
@@ -77,6 +99,6 @@ class Job extends Model
     {
         $delete = Redis::del('JOB_' . $id);
 
-        return $delete;
+        return !!$delete ? true : false;
     }
 }

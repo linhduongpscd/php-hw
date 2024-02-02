@@ -7,7 +7,13 @@ use Illuminate\Foundation\Http\FormRequest;
 /**
 * @OA\Schema(
 *     properties={
-*          @OA\Property(property="urls", type="array", @OA\Items())
+*          @OA\Property(property="urls", type="array", 
+*               @OA\Items(
+*                   type="string",
+*                   default="https://example.com"
+*               )
+*           )
+*     
 *     }
 * )
 */
@@ -18,7 +24,7 @@ class JobRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        return false;
+        return true;
     }
 
     /**
