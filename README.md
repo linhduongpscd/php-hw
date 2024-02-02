@@ -22,6 +22,7 @@ services like PHP, Nginx/Apache, and Redis, earning bonus points.
 
 - Clone source
 - Install redis
+- Copy env.example to .env
 - Install composer
 > composer install
 - Run serve
